@@ -1,0 +1,448 @@
+
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Converted Markdown</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.7/dist/katex.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/vs2015.min.css">
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+            line-height: 1.6;
+            color: #e0e0e0;
+            background-color: #1e1e1e;
+            padding: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        pre {
+            background-color: #1e1e1e;
+            border-radius: 4px;
+            padding: 16px;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        code {
+            font-family: Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace;
+            font-size: 14px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin-bottom: 1em;
+        }
+        th, td {
+            border: 1px solid #4a4a4a;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #2d2d2d;
+        }
+        img {
+            max-width: 100%;
+            height: auto;
+        }
+        a {
+            color: #569cd6;
+        }
+        h1, h2, h3, h4, h5, h6 {
+            color: #e0e0e0;
+        }
+    </style>
+</head>
+<body>
+    <pre><code class="language-python"><span class="hljs-keyword">import</span> torch
+<span class="hljs-keyword">import</span> torch.nn <span class="hljs-keyword">as</span> nn
+<span class="hljs-keyword">import</span> math
+
+<span class="hljs-keyword">class</span> <span class="hljs-title class_">InputEmbeddings</span>(nn.Module):
+
+    <span class="hljs-keyword">def</span> <span class="hljs-title function_">__init__</span>(<span class="hljs-params">self, d_model: <span class="hljs-built_in">int</span>, vocab_size: <span class="hljs-built_in">int</span></span>) -&gt; <span class="hljs-literal">None</span>:
+        <span class="hljs-comment"># d_model: The size of the embedding vector</span>
+        <span class="hljs-comment"># vocab_size: Number of tokens in the vocabulary</span>
+
+        <span class="hljs-built_in">super</span>().__init__()
+        <span class="hljs-variable language_">self</span>.d_model = d_model
+        <span class="hljs-variable language_">self</span>.vocab_size = vocab_size
+        
+        <span class="hljs-comment"># Stores the embeddings of the tokens</span>
+        <span class="hljs-variable language_">self</span>.embedding = nn.Embedding(num_embeddings=vocab_size, embedding_dim=d_model)
+
+    <span class="hljs-keyword">def</span> <span class="hljs-title function_">forward</span>(<span class="hljs-params">self, x</span>):
+        <span class="hljs-comment"># Could just do self.embedding(x)</span>
+        <span class="hljs-comment"># But in the paper, we multiply those weights by sqrt(d_model)</span>
+
+        <span class="hljs-comment"># (batch, seq_len) --&gt; (batch, seq_len, d_model)</span>
+        <span class="hljs-keyword">return</span> <span class="hljs-variable language_">self</span>.embedding(x) * math.sqrt(<span class="hljs-variable language_">self</span>.d_model)
+
+<span class="hljs-keyword">class</span> <span class="hljs-title class_">PositionalEncoding</span>(nn.Module):
+        <span class="hljs-comment"># Since num samples of nn.Linear&#x27;out = nn.Linear&#x27;s in</span>
+    <span class="hljs-keyword">def</span> <span class="hljs-title function_">__init__</span>(<span class="hljs-params">self, d_model: <span class="hljs-built_in">int</span>, seq_len: <span class="hljs-built_in">int</span>, dropout: <span class="hljs-built_in">float</span></span>) -&gt; <span class="hljs-literal">None</span>:
+        <span class="hljs-comment"># d_model: size of the embedding vector</span>
+        <span class="hljs-comment"># seq_len: max length of the sequence defined by number of tokens</span>
+        <span class="hljs-comment"># dropout: dropout rate</span>
+
+        <span class="hljs-built_in">super</span>().__init__()
+        <span class="hljs-variable language_">self</span>.d_model = d_model
+        <span class="hljs-variable language_">self</span>.seq_len = seq_len
+        <span class="hljs-variable language_">self</span>.dropout = nn.Dropout(dropout)
+
+        <span class="hljs-comment"># Positional Encoding formulas:</span>
+        <span class="hljs-comment"># $P(k, 2i) = \sin(k \cdot \exp(2i \cdot \frac{- \log 10000}{d_{model}}))$  </span>
+        <span class="hljs-comment"># $P(k, 2i+1) = \cos(k \cdot \exp(2i \cdot \frac{- \log 10000}{d_{model}}))$  </span>
+
+        <span class="hljs-comment"># Create a matrix of shape (seq_len, d_model)</span>
+        pe = torch.zeros(seq_len, d_model)
+
+        <span class="hljs-comment"># Create a position vector of shape (seq_len)</span>
+        position = torch.arange(<span class="hljs-number">0</span>, seq_len, dtype=torch.<span class="hljs-built_in">float</span>).unsqueeze(<span class="hljs-number">1</span>) <span class="hljs-comment"># (seq_len, 1)</span>
+        <span class="hljs-comment"># Create a 2i vector of shape (d_model)</span>
+        two_i = torch.arange(<span class="hljs-number">0</span>, d_model, <span class="hljs-number">2</span>).<span class="hljs-built_in">float</span>()
+
+        <span class="hljs-comment"># Create a vector of shape (d_model)</span>
+        div_term = torch.exp(two_i * (-math.log(<span class="hljs-number">10000.0</span>) / d_model)) <span class="hljs-comment"># (d_model / 2)</span>
+
+        <span class="hljs-comment"># Apply to all positions, but only skip dims in embedding space by 2</span>
+        <span class="hljs-comment">## Apply sine to even indices - 0::2 is the same as 0:seq_len:2: 0, 2, 4, etc.</span>
+        pe[:, <span class="hljs-number">0</span>::<span class="hljs-number">2</span>] = torch.sin(position * div_term)
+        <span class="hljs-comment">## Apply cosine to odd indices - 1::2 is the same as 1:seq_len:2: 1, 3, 5, etc</span>
+        pe[:, <span class="hljs-number">1</span>::<span class="hljs-number">2</span>] = torch.cos(position * div_term)
+
+        <span class="hljs-comment"># Add a batch dimension to the positional encoding</span>
+        <span class="hljs-comment">#  so now we can handle batches of sequences</span>
+        pe = pe.unsqueeze(<span class="hljs-number">0</span>) <span class="hljs-comment"># (1, seq_len, d_model)</span>
+
+        <span class="hljs-comment"># Register the positional encoding as a non-trainable buffer </span>
+        <span class="hljs-comment">#  that is read-only during backprop/training</span>
+        <span class="hljs-variable language_">self</span>.register_buffer(<span class="hljs-string">&#x27;pe&#x27;</span>, pe)
+
+    <span class="hljs-keyword">def</span> <span class="hljs-title function_">forward</span>(<span class="hljs-params">self, x</span>):
+        <span class="hljs-comment"># x: (batch_size, seq_len, d_model)</span>
+        <span class="hljs-comment"># pe: (batch_size, seq_len, d_model)</span>
+
+        <span class="hljs-comment"># Retrieve the first x.shape[1] positional encodings and apply to all embeddings in all batches</span>
+        <span class="hljs-comment">#  ex: x: (32, 50, 512), pe: (1, 100, 512), only first 50 embeddings are updated</span>
+        <span class="hljs-comment">#  pe is broadcasted to all batches</span>
+        x = x + (<span class="hljs-variable language_">self</span>.pe[:, :x.shape[<span class="hljs-number">1</span>], :]).requires_grad_(<span class="hljs-literal">False</span>) <span class="hljs-comment"># (batch, seq_len, d_model)</span>
+        <span class="hljs-comment"># We expliclty add requires_grad_(False) even tho it may not be necessary</span>
+        <span class="hljs-comment">#  since we don&#x27;t want to backprop through the positional encoding</span>
+
+        <span class="hljs-keyword">return</span> <span class="hljs-variable language_">self</span>.dropout(x)
+
+<span class="hljs-keyword">class</span> <span class="hljs-title class_">FeedForwardBlock</span>(nn.Module):
+    <span class="hljs-comment"># FFN(x) = \max(0, xW_1^T + b_1)W_2^T + b_2</span>
+    <span class="hljs-comment"># x: (batch, seq_len, d_model)</span>
+    <span class="hljs-comment"># W_1: (d_ff, d_model)</span>
+    <span class="hljs-comment"># b_1: (d_ff)</span>
+    <span class="hljs-comment"># W_2: (d_model, d_ff)</span>
+    <span class="hljs-comment"># b_2: (d_model)</span>
+
+    <span class="hljs-comment"># We project the input x to a higher dimensional space d_ff</span>
+    <span class="hljs-comment">#  facts are learned in this higher dimensional space</span>
+    <span class="hljs-comment"># Then apply a ReLU activation</span>
+    <span class="hljs-comment"># Then project back to the original dimension d_model</span>
+     
+    <span class="hljs-keyword">def</span> <span class="hljs-title function_">__init__</span>(<span class="hljs-params">self, d_model: <span class="hljs-built_in">int</span>, d_ff: <span class="hljs-built_in">int</span>, dropout: <span class="hljs-built_in">float</span></span>) -&gt; <span class="hljs-literal">None</span>:
+        <span class="hljs-built_in">super</span>().__init__()
+        <span class="hljs-variable language_">self</span>.linear_1 = nn.Linear(d_model, d_ff) <span class="hljs-comment"># w1 and b1</span>
+        <span class="hljs-variable language_">self</span>.dropout = nn.Dropout(dropout)
+        <span class="hljs-variable language_">self</span>.linear_2 = nn.Linear(d_ff, d_model) <span class="hljs-comment"># w2 and b2</span>
+
+    <span class="hljs-keyword">def</span> <span class="hljs-title function_">forward</span>(<span class="hljs-params">self, x</span>):
+        <span class="hljs-comment"># Note: input_dim of linear_1 = output_dim of linear_2</span>
+        <span class="hljs-comment"># (batch, seq_len, d_model) --&gt; (batch, seq_len, d_ff) --&gt; (batch, seq_len, d_model)</span>
+        <span class="hljs-keyword">return</span> <span class="hljs-variable language_">self</span>.linear_2(<span class="hljs-variable language_">self</span>.dropout(torch.relu(<span class="hljs-variable language_">self</span>.linear_1(x))))
+    
+<span class="hljs-keyword">class</span> <span class="hljs-title class_">MultiHeadAttentionBlock</span>(nn.Module):
+    <span class="hljs-comment"># d_k: dim of query, key, and value vectors for each head</span>
+
+    <span class="hljs-keyword">def</span> <span class="hljs-title function_">__init__</span>(<span class="hljs-params">self, d_model: <span class="hljs-built_in">int</span>, h: <span class="hljs-built_in">int</span>, dropout: <span class="hljs-built_in">float</span></span>) -&gt; <span class="hljs-literal">None</span>:
+        <span class="hljs-comment"># d_model: size of embedding</span>
+        <span class="hljs-comment"># h: number of heads</span>
+        <span class="hljs-comment"># dropout: dropout rate</span>
+
+        <span class="hljs-built_in">super</span>().__init__()
+        <span class="hljs-variable language_">self</span>.d_model = d_model
+        <span class="hljs-variable language_">self</span>.h = h
+
+        <span class="hljs-comment"># Make sure d_model is divisible by h</span>
+        <span class="hljs-comment"># Each head consists of d_model/h dimensions</span>
+        <span class="hljs-keyword">assert</span> d_model % h == <span class="hljs-number">0</span>, <span class="hljs-string">&quot;d_model is not divisible by h&quot;</span>
+
+        <span class="hljs-comment"># Size of projected down dimension for key, query, and value vectors</span>
+        <span class="hljs-comment">#  128 dim space</span>
+        <span class="hljs-variable language_">self</span>.d_k = d_model // h
+
+        <span class="hljs-comment"># Wq: (d_model, d_model)</span>
+        <span class="hljs-comment"># Wk: (d_model, d_model)</span>
+        <span class="hljs-comment"># Wv: (d_model, d_model)</span>
+        <span class="hljs-variable language_">self</span>.w_q = nn.Linear(d_model, d_model, bias=<span class="hljs-literal">False</span>)
+        <span class="hljs-variable language_">self</span>.w_k = nn.Linear(d_model, d_model, bias=<span class="hljs-literal">False</span>)
+        <span class="hljs-variable language_">self</span>.w_v = nn.Linear(d_model, d_model, bias=<span class="hljs-literal">False</span>)
+
+        <span class="hljs-comment"># Wo: (d_model, d_model)</span>
+        <span class="hljs-variable language_">self</span>.w_o = nn.Linear(d_model, d_model, bias=<span class="hljs-literal">False</span>)
+
+        <span class="hljs-variable language_">self</span>.dropout = nn.Dropout(dropout)
+
+<span class="hljs-meta">    @staticmethod</span>
+    <span class="hljs-keyword">def</span> <span class="hljs-title function_">attention</span>(<span class="hljs-params">query, key, value, mask, dropout: nn.Dropout</span>):
+        <span class="hljs-comment"># Roughly: 1. Computes query-key dot product 2. Applies softmax (per query) 3. Dot product with value</span>
+
+        d_k = query.shape[-<span class="hljs-number">1</span>]
+
+        <span class="hljs-comment"># query: (batch, h, seq_len, d_k)</span>
+        <span class="hljs-comment"># key: (batch, h, seq_len, d_k)</span>
+        <span class="hljs-comment"># key.transpose(-2, -1): (batch, h, d_k, seq_len)</span>
+        <span class="hljs-comment"># query @ key.transpose(-2, -1): (batch, h, seq_len, d_k) @ (batch, h, d_k, seq_len) = (batch, h, seq_len, seq_len)</span>
+        attention_scores = (query @ key.transpose(-<span class="hljs-number">2</span>, -<span class="hljs-number">1</span>)) / math.sqrt(d_k)
+
+        <span class="hljs-comment"># Since Q*K^T, for a single q_i, all k_j are considered</span>
+        <span class="hljs-comment"># so operations like masking or softmax are applied row-wise for each row across columns</span>
+        <span class="hljs-comment">#  across column =&gt; dim=-1</span>
+
+        <span class="hljs-keyword">if</span> mask <span class="hljs-keyword">is</span> <span class="hljs-keyword">not</span> <span class="hljs-literal">None</span>:
+            <span class="hljs-comment"># Write a very low value (indicating -inf) to the positions where mask == 0</span>
+            attention_scores.masked_fill_(mask == <span class="hljs-number">0</span>, -<span class="hljs-number">1e9</span>)
+
+        <span class="hljs-comment"># Apply softmax on last dim</span>
+        <span class="hljs-comment"># (batch, h, seq_len, seq_len)</span>
+        attention_scores = attention_scores.softmax(dim=-<span class="hljs-number">1</span>) 
+
+        <span class="hljs-keyword">if</span> dropout <span class="hljs-keyword">is</span> <span class="hljs-keyword">not</span> <span class="hljs-literal">None</span>:
+            attention_scores = dropout(attention_scores)
+
+        <span class="hljs-comment"># Notice how the attention scores are used to weight the value vectors</span>
+        <span class="hljs-comment">#  since dim(attention_scores @ value) = dim(value)</span>
+        <span class="hljs-comment"># (batch, h, seq_len, seq_len) * (batch, h, seq_len, d_k) = (batch, h, seq_len, d_k), (batch, h, seq_len, seq_len)</span>
+        <span class="hljs-keyword">return</span> (attention_scores @ value), attention_scores
+        <span class="hljs-comment"># return attention scores which can be used for visualization</span>
+
+    <span class="hljs-keyword">def</span> <span class="hljs-title function_">forward</span>(<span class="hljs-params">self, q, k, v, mask</span>):
+        <span class="hljs-comment"># Multihead query, key, value generation</span>
+        <span class="hljs-comment"># query = (batch, seq_len, d_model) * (d_model, d_model) = (batch, seq_len, d_model)</span>
+        <span class="hljs-comment"># key =   (batch, seq_len, d_model) * (d_model, d_model) = (batch, seq_len, d_model)</span>
+        <span class="hljs-comment"># value = (batch, seq_len, d_model) * (d_model, d_model) = (batch, seq_len, d_model)</span>
+        <span class="hljs-comment"># Multihead query, key, value generation, but split into h</span>
+        <span class="hljs-comment"># query = (batch, seq_len, d_model) * (d_model, h*d_k) = (batch, seq_len, h*d_k)}</span>
+        <span class="hljs-comment"># key =   (batch, seq_len, d_model) * (d_model, h*d_k) = (batch, seq_len, h*d_k)</span>
+        <span class="hljs-comment"># value = (batch, seq_len, d_model) * (d_model, h*d_k) = (batch, seq_len, h*d_k)</span>
+        query = <span class="hljs-variable language_">self</span>.w_q(q) 
+        key = <span class="hljs-variable language_">self</span>.w_k(k)
+        value = <span class="hljs-variable language_">self</span>.w_v(v)
+
+        <span class="hljs-comment"># query = (batch, seq_len, d_model) -&gt; (batch, seq_len, h, d_k) -&gt; (batch, h, seq_len, d_k)</span>
+        <span class="hljs-comment"># key   = (batch, seq_len, d_model) -&gt; (batch, seq_len, h, d_k) -&gt; (batch, h, seq_len, d_k)</span>
+        <span class="hljs-comment"># value = (batch, seq_len, d_model) -&gt; (batch, seq_len, h, d_k) -&gt; (batch, h, seq_len, d_k)</span>
+        query = query.view(query.shape[<span class="hljs-number">0</span>], query.shape[<span class="hljs-number">1</span>], <span class="hljs-variable language_">self</span>.h, <span class="hljs-variable language_">self</span>.d_k).transpose(<span class="hljs-number">1</span>, <span class="hljs-number">2</span>)
+        key = key.view(key.shape[<span class="hljs-number">0</span>], key.shape[<span class="hljs-number">1</span>], <span class="hljs-variable language_">self</span>.h, <span class="hljs-variable language_">self</span>.d_k).transpose(<span class="hljs-number">1</span>, <span class="hljs-number">2</span>)
+        value = value.view(value.shape[<span class="hljs-number">0</span>], value.shape[<span class="hljs-number">1</span>], <span class="hljs-variable language_">self</span>.h, <span class="hljs-variable language_">self</span>.d_k).transpose(<span class="hljs-number">1</span>, <span class="hljs-number">2</span>)
+
+        <span class="hljs-comment"># Calculate attention</span>
+        <span class="hljs-comment"># (batch, h, seq_len, d_k), (batch, h, seq_len, seq_len)</span>
+        x, <span class="hljs-variable language_">self</span>.attention_scores = MultiHeadAttentionBlock.attention(query, key, value, mask, <span class="hljs-variable language_">self</span>.dropout)
+         
+        <span class="hljs-comment"># Concat all the heads together</span>
+        <span class="hljs-comment"># (batch, h, seq_len, d_k) -&gt; (batch, seq_len, h, d_k) -&gt; (batch, seq_len, d_model)</span>
+        x = x.transpose(<span class="hljs-number">1</span>, <span class="hljs-number">2</span>).contiguous().view(x.shape[<span class="hljs-number">0</span>], -<span class="hljs-number">1</span>, <span class="hljs-variable language_">self</span>.h * <span class="hljs-variable language_">self</span>.d_k)
+
+        <span class="hljs-comment"># Multiply by Wo</span>
+        <span class="hljs-comment"># (batch, seq_len, d_model) * (d_model, d_model) = (batch, seq_len, d_model)</span>
+        <span class="hljs-keyword">return</span> <span class="hljs-variable language_">self</span>.w_o(x)
+
+<span class="hljs-keyword">class</span> <span class="hljs-title class_">LayerNormalization</span>(nn.Module):
+    <span class="hljs-comment"># Normalize each sample in a batch independently</span>
+    <span class="hljs-comment">#  rather than normalizing across each dim/feature in a sample</span>
+    <span class="hljs-comment">#  $\alpha (x - \mu)/(\sigma + \epsilon) + \beta</span>
+    <span class="hljs-comment">#  alpha and beta are learned to shift and scale the normalized x</span>
+    <span class="hljs-comment">#  adding epsilon adds numerical stability to prevent division by zero</span>
+    <span class="hljs-keyword">def</span> <span class="hljs-title function_">__init__</span>(<span class="hljs-params">self, input_dim: <span class="hljs-built_in">int</span>, eps:<span class="hljs-built_in">float</span>=<span class="hljs-number">10</span>**-<span class="hljs-number">6</span></span>) -&gt; <span class="hljs-literal">None</span>:
+        <span class="hljs-built_in">super</span>().__init__()
+        <span class="hljs-variable language_">self</span>.eps = eps
+        <span class="hljs-variable language_">self</span>.alpha = nn.Parameter(torch.ones(input_dim)) <span class="hljs-comment"># alpha is a learnable parameter</span>
+        <span class="hljs-variable language_">self</span>.bias = nn.Parameter(torch.zeros(input_dim)) <span class="hljs-comment"># bias is a learnable parameter</span>
+
+    <span class="hljs-keyword">def</span> <span class="hljs-title function_">forward</span>(<span class="hljs-params">self, x</span>):
+        <span class="hljs-comment"># x: (batch, seq_len, input_dim)</span>
+
+        <span class="hljs-comment"># Mean across last dimension: (batch, seq_len, 1)</span>
+        <span class="hljs-comment"># Keep the dimension for broadcasting (we don&#x27;t want: (batch, seq_len))</span>
+        mean = x.mean(dim = -<span class="hljs-number">1</span>, keepdim = <span class="hljs-literal">True</span>) 
+
+        <span class="hljs-comment"># Across last dimension: (batch, seq_len, 1)</span>
+        <span class="hljs-comment"># Keep the dimension for broadcasting (we don&#x27;t want: (batch, seq_len))</span>
+        std = x.std(dim = -<span class="hljs-number">1</span>, keepdim = <span class="hljs-literal">True</span>) 
+
+        <span class="hljs-comment"># eps is to prevent dividing by zero or when std is very small</span>
+        <span class="hljs-keyword">return</span> <span class="hljs-variable language_">self</span>.alpha * (x - mean) / (std + <span class="hljs-variable language_">self</span>.eps) + <span class="hljs-variable language_">self</span>.bias
+
+<span class="hljs-keyword">class</span> <span class="hljs-title class_">ResidualConnection</span>(nn.Module):
+    
+        <span class="hljs-keyword">def</span> <span class="hljs-title function_">__init__</span>(<span class="hljs-params">self, features: <span class="hljs-built_in">int</span>, dropout: <span class="hljs-built_in">float</span></span>) -&gt; <span class="hljs-literal">None</span>:
+            <span class="hljs-built_in">super</span>().__init__()
+            <span class="hljs-variable language_">self</span>.dropout = nn.Dropout(dropout)
+            <span class="hljs-variable language_">self</span>.norm = LayerNormalization(features)
+    
+        <span class="hljs-keyword">def</span> <span class="hljs-title function_">forward</span>(<span class="hljs-params">self, x, sublayer</span>):
+            <span class="hljs-comment"># sublayer is previous layer</span>
+            <span class="hljs-comment"># In the paper:</span>
+            <span class="hljs-comment"># return x + self.dropout(self.norm(sublayer(x)))</span>
+            <span class="hljs-keyword">return</span> x + <span class="hljs-variable language_">self</span>.dropout(sublayer(<span class="hljs-variable language_">self</span>.norm(x)))
+
+<span class="hljs-keyword">class</span> <span class="hljs-title class_">EncoderBlock</span>(nn.Module):
+
+    <span class="hljs-keyword">def</span> <span class="hljs-title function_">__init__</span>(<span class="hljs-params">self, features: <span class="hljs-built_in">int</span>, self_attention_block: MultiHeadAttentionBlock, feed_forward_block: FeedForwardBlock, dropout: <span class="hljs-built_in">float</span></span>) -&gt; <span class="hljs-literal">None</span>:
+        <span class="hljs-built_in">super</span>().__init__()
+        <span class="hljs-variable language_">self</span>.self_attention_block = self_attention_block
+        <span class="hljs-variable language_">self</span>.feed_forward_block = feed_forward_block
+        <span class="hljs-variable language_">self</span>.residual_connections = nn.ModuleList([ResidualConnection(features, dropout) <span class="hljs-keyword">for</span> _ <span class="hljs-keyword">in</span> <span class="hljs-built_in">range</span>(<span class="hljs-number">2</span>)])
+
+    <span class="hljs-keyword">def</span> <span class="hljs-title function_">forward</span>(<span class="hljs-params">self, x, src_mask</span>):
+        <span class="hljs-comment"># Sequence is interacting with itself self.self_attention_block(x, x, x, src_mask) hence why it&#x27;s called self attention</span>
+        x = <span class="hljs-variable language_">self</span>.residual_connections[<span class="hljs-number">0</span>](x, <span class="hljs-keyword">lambda</span> x: <span class="hljs-variable language_">self</span>.self_attention_block(x, x, x, src_mask))
+        x = <span class="hljs-variable language_">self</span>.residual_connections[<span class="hljs-number">1</span>](x, <span class="hljs-variable language_">self</span>.feed_forward_block)
+        <span class="hljs-keyword">return</span> x
+    
+<span class="hljs-keyword">class</span> <span class="hljs-title class_">Encoder</span>(nn.Module):
+
+    <span class="hljs-keyword">def</span> <span class="hljs-title function_">__init__</span>(<span class="hljs-params">self, features: <span class="hljs-built_in">int</span>, layers: nn.ModuleList</span>) -&gt; <span class="hljs-literal">None</span>:
+        <span class="hljs-built_in">super</span>().__init__()
+        <span class="hljs-variable language_">self</span>.layers = layers
+        <span class="hljs-variable language_">self</span>.norm = LayerNormalization(features)
+
+    <span class="hljs-keyword">def</span> <span class="hljs-title function_">forward</span>(<span class="hljs-params">self, x, mask</span>):
+        <span class="hljs-keyword">for</span> layer <span class="hljs-keyword">in</span> <span class="hljs-variable language_">self</span>.layers:
+            x = layer(x, mask)
+        <span class="hljs-keyword">return</span> <span class="hljs-variable language_">self</span>.norm(x)
+
+<span class="hljs-keyword">class</span> <span class="hljs-title class_">DecoderBlock</span>(nn.Module):
+
+    <span class="hljs-keyword">def</span> <span class="hljs-title function_">__init__</span>(<span class="hljs-params">self, features: <span class="hljs-built_in">int</span>, self_attention_block: MultiHeadAttentionBlock, cross_attention_block: MultiHeadAttentionBlock, feed_forward_block: FeedForwardBlock, dropout: <span class="hljs-built_in">float</span></span>) -&gt; <span class="hljs-literal">None</span>:
+        <span class="hljs-built_in">super</span>().__init__()
+        <span class="hljs-variable language_">self</span>.self_attention_block = self_attention_block
+        <span class="hljs-variable language_">self</span>.cross_attention_block = cross_attention_block
+        <span class="hljs-variable language_">self</span>.feed_forward_block = feed_forward_block
+        <span class="hljs-variable language_">self</span>.residual_connections = nn.ModuleList([ResidualConnection(features, dropout) <span class="hljs-keyword">for</span> _ <span class="hljs-keyword">in</span> <span class="hljs-built_in">range</span>(<span class="hljs-number">3</span>)])
+
+    <span class="hljs-keyword">def</span> <span class="hljs-title function_">forward</span>(<span class="hljs-params">self, x, encoder_output, src_mask, tgt_mask</span>):
+        <span class="hljs-comment"># Multihead attention params: query(x), key(encoder_output), value(encoder_output)</span>
+        <span class="hljs-comment">#  query comes from decoder</span>
+        <span class="hljs-comment"># src_mask: encoder mask, tgt_mask = decoder mask </span>
+        <span class="hljs-comment"># src: src english, tgt: target language - italian</span>
+        x = <span class="hljs-variable language_">self</span>.residual_connections[<span class="hljs-number">0</span>](x, <span class="hljs-keyword">lambda</span> x: <span class="hljs-variable language_">self</span>.self_attention_block(x, x, x, tgt_mask))
+        x = <span class="hljs-variable language_">self</span>.residual_connections[<span class="hljs-number">1</span>](x, <span class="hljs-keyword">lambda</span> x: <span class="hljs-variable language_">self</span>.cross_attention_block(x, encoder_output, encoder_output, src_mask))
+        x = <span class="hljs-variable language_">self</span>.residual_connections[<span class="hljs-number">2</span>](x, <span class="hljs-variable language_">self</span>.feed_forward_block)
+        <span class="hljs-keyword">return</span> x
+    
+<span class="hljs-keyword">class</span> <span class="hljs-title class_">Decoder</span>(nn.Module):
+
+    <span class="hljs-keyword">def</span> <span class="hljs-title function_">__init__</span>(<span class="hljs-params">self, features: <span class="hljs-built_in">int</span>, layers: nn.ModuleList</span>) -&gt; <span class="hljs-literal">None</span>:
+        <span class="hljs-built_in">super</span>().__init__()
+        <span class="hljs-variable language_">self</span>.layers = layers
+        <span class="hljs-variable language_">self</span>.norm = LayerNormalization(features)
+
+    <span class="hljs-keyword">def</span> <span class="hljs-title function_">forward</span>(<span class="hljs-params">self, x, encoder_output, src_mask, tgt_mask</span>):
+        <span class="hljs-keyword">for</span> layer <span class="hljs-keyword">in</span> <span class="hljs-variable language_">self</span>.layers:
+            x = layer(x, encoder_output, src_mask, tgt_mask)
+        <span class="hljs-keyword">return</span> <span class="hljs-variable language_">self</span>.norm(x)
+
+<span class="hljs-keyword">class</span> <span class="hljs-title class_">ProjectionLayer</span>(nn.Module):
+    <span class="hljs-comment"># Linear layer that&#x27;s projecting the embedding into the vocabulary</span>
+
+    <span class="hljs-keyword">def</span> <span class="hljs-title function_">__init__</span>(<span class="hljs-params">self, d_model, vocab_size</span>) -&gt; <span class="hljs-literal">None</span>:
+        <span class="hljs-built_in">super</span>().__init__()
+        <span class="hljs-variable language_">self</span>.proj = nn.Linear(d_model, vocab_size)
+
+    <span class="hljs-keyword">def</span> <span class="hljs-title function_">forward</span>(<span class="hljs-params">self, x</span>) -&gt; <span class="hljs-literal">None</span>:
+        <span class="hljs-comment"># (batch, seq_len, d_model) * (d_model, vocab_size) = (batch, seq_len, vocab_size)</span>
+        <span class="hljs-comment"># Then compute log softmax on last dim vocab_size</span>
+        <span class="hljs-keyword">return</span> torch.log_softmax(<span class="hljs-variable language_">self</span>.proj(x), dim=-<span class="hljs-number">1</span>)
+    
+<span class="hljs-keyword">class</span> <span class="hljs-title class_">Transformer</span>(nn.Module):
+    <span class="hljs-comment"># Why not use forward method? We can reuse</span>
+
+    <span class="hljs-keyword">def</span> <span class="hljs-title function_">__init__</span>(<span class="hljs-params">self, encoder: Encoder, decoder: Decoder, src_embed: InputEmbeddings, tgt_embed: InputEmbeddings, src_pos: PositionalEncoding, tgt_pos: PositionalEncoding, projection_layer: ProjectionLayer</span>) -&gt; <span class="hljs-literal">None</span>:
+        <span class="hljs-built_in">super</span>().__init__()
+        <span class="hljs-variable language_">self</span>.encoder = encoder
+        <span class="hljs-variable language_">self</span>.decoder = decoder
+        <span class="hljs-variable language_">self</span>.src_embed = src_embed
+        <span class="hljs-variable language_">self</span>.tgt_embed = tgt_embed
+        <span class="hljs-variable language_">self</span>.src_pos = src_pos
+        <span class="hljs-variable language_">self</span>.tgt_pos = tgt_pos
+        <span class="hljs-variable language_">self</span>.projection_layer = projection_layer
+
+    <span class="hljs-keyword">def</span> <span class="hljs-title function_">encode</span>(<span class="hljs-params">self, src, src_mask</span>):
+        <span class="hljs-comment"># (batch, seq_len, d_model)</span>
+        src = <span class="hljs-variable language_">self</span>.src_embed(src)
+        src = <span class="hljs-variable language_">self</span>.src_pos(src)
+        <span class="hljs-keyword">return</span> <span class="hljs-variable language_">self</span>.encoder(src, src_mask)
+    
+    <span class="hljs-keyword">def</span> <span class="hljs-title function_">decode</span>(<span class="hljs-params">self, encoder_output: torch.Tensor, src_mask: torch.Tensor, tgt: torch.Tensor, tgt_mask: torch.Tensor</span>):
+        <span class="hljs-comment"># (batch, seq_len, d_model)</span>
+        tgt = <span class="hljs-variable language_">self</span>.tgt_embed(tgt)
+        tgt = <span class="hljs-variable language_">self</span>.tgt_pos(tgt)
+        <span class="hljs-keyword">return</span> <span class="hljs-variable language_">self</span>.decoder(tgt, encoder_output, src_mask, tgt_mask)
+    
+    <span class="hljs-keyword">def</span> <span class="hljs-title function_">project</span>(<span class="hljs-params">self, x</span>):
+        <span class="hljs-comment"># (batch, seq_len, vocab_size)</span>
+        <span class="hljs-keyword">return</span> <span class="hljs-variable language_">self</span>.projection_layer(x)
+    
+<span class="hljs-keyword">def</span> <span class="hljs-title function_">build_transformer</span>(<span class="hljs-params">src_vocab_size: <span class="hljs-built_in">int</span>, tgt_vocab_size: <span class="hljs-built_in">int</span>, src_seq_len: <span class="hljs-built_in">int</span>, tgt_seq_len: <span class="hljs-built_in">int</span>, d_model: <span class="hljs-built_in">int</span>=<span class="hljs-number">512</span>, N: <span class="hljs-built_in">int</span>=<span class="hljs-number">6</span>, h: <span class="hljs-built_in">int</span>=<span class="hljs-number">8</span>, dropout: <span class="hljs-built_in">float</span>=<span class="hljs-number">0.1</span>, d_ff: <span class="hljs-built_in">int</span>=<span class="hljs-number">2048</span></span>) -&gt; Transformer:
+    <span class="hljs-comment"># N - number of layers, for encoding and decoding</span>
+    <span class="hljs-comment"># h - number of heads</span>
+    <span class="hljs-comment"># d_ff - number of neurons in the hidden layer of the feed forward network</span>
+    <span class="hljs-comment"># Create the embedding layers</span>
+    src_embed = InputEmbeddings(d_model, src_vocab_size)
+    tgt_embed = InputEmbeddings(d_model, tgt_vocab_size)
+
+    <span class="hljs-comment"># Create the positional encoding layers</span>
+    src_pos = PositionalEncoding(d_model, src_seq_len, dropout)
+    tgt_pos = PositionalEncoding(d_model, tgt_seq_len, dropout)
+    
+    <span class="hljs-comment"># Create the encoder blocks</span>
+    encoder_blocks = []
+    <span class="hljs-keyword">for</span> _ <span class="hljs-keyword">in</span> <span class="hljs-built_in">range</span>(N):
+        encoder_self_attention_block = MultiHeadAttentionBlock(d_model, h, dropout)
+        feed_forward_block = FeedForwardBlock(d_model, d_ff, dropout)
+        encoder_block = EncoderBlock(d_model, encoder_self_attention_block, feed_forward_block, dropout)
+        encoder_blocks.append(encoder_block)
+
+    <span class="hljs-comment"># Create the decoder blocks</span>
+    decoder_blocks = []
+    <span class="hljs-keyword">for</span> _ <span class="hljs-keyword">in</span> <span class="hljs-built_in">range</span>(N):
+        decoder_self_attention_block = MultiHeadAttentionBlock(d_model, h, dropout)
+        decoder_cross_attention_block = MultiHeadAttentionBlock(d_model, h, dropout)
+        feed_forward_block = FeedForwardBlock(d_model, d_ff, dropout)
+        decoder_block = DecoderBlock(d_model, decoder_self_attention_block, decoder_cross_attention_block, feed_forward_block, dropout)
+        decoder_blocks.append(decoder_block)
+    
+    <span class="hljs-comment"># Create the encoder and decoder</span>
+    encoder = Encoder(d_model, nn.ModuleList(encoder_blocks))
+    decoder = Decoder(d_model, nn.ModuleList(decoder_blocks))
+    
+    <span class="hljs-comment"># Create the projection layer</span>
+    projection_layer = ProjectionLayer(d_model, tgt_vocab_size)
+    
+    <span class="hljs-comment"># Create the transformer</span>
+    transformer = Transformer(encoder, decoder, src_embed, tgt_embed, src_pos, tgt_pos, projection_layer)
+    
+    <span class="hljs-comment"># Initialize the parameters</span>
+    <span class="hljs-keyword">for</span> p <span class="hljs-keyword">in</span> transformer.parameters():
+        <span class="hljs-keyword">if</span> p.dim() &gt; <span class="hljs-number">1</span>:
+            nn.init.xavier_uniform_(p)
+    
+    <span class="hljs-keyword">return</span> transformer
+
+<span class="hljs-keyword">def</span> <span class="hljs-title function_">get_model</span>(<span class="hljs-params">config, vocab_src_len, vocab_tgt_len</span>):
+    model = build_transformer(vocab_src_len, vocab_tgt_len, config[<span class="hljs-string">&quot;seq_len&quot;</span>], config[<span class="hljs-string">&#x27;seq_len&#x27;</span>], d_model=config[<span class="hljs-string">&#x27;d_model&#x27;</span>])
+    <span class="hljs-keyword">return</span> model
+</code></pre>
+
+</body>
+</html>
+    

@@ -1,4 +1,8 @@
 #!/bin/bash
 
 find . -type f -name "*.md" -exec ./md2html '{}' \;
-find . -type f -name "*.html" -exec ./html2pdf '{}' \;
+# find . -type f -name "*.html" -exec ./html2pdf '{}' \;
+
+./generate_index.py
+
+google-chrome index.html
