@@ -7,4 +7,6 @@ anki/
 /html2pdf
 
 *.md
+!README.md
+
 # *.html
