@@ -7604,7 +7604,7 @@ a.anchor-link {
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h1 id="Puzzle-1:-Constant-Add">Puzzle 1: Constant Add<a class="anchor-link" href="#Puzzle-1:-Constant-Add">¶</a></h1><p>Add a constant to a vector. Uses one program id axis. Block size <code>B0</code> is always the same as vector <code>x</code> with length <code>N0</code>.</p>
+<h1 id="Puzzle-1:-Constant-Add-">Puzzle 1: Constant Add <a class="anchor-link" href="#Puzzle-1:-Constant-Add-">¶</a></h1><p>Add a constant to a vector. Uses one program id axis. Block size <code>B0</code> is always the same as vector <code>x</code> with length <code>N0</code>.</p>
 <p>$$z_i = 10 + x_i \text{ for } i = 1\ldots N_0$$</p>
 <p><img alt="" src="imgs/puzzle_1.png"/></p>
 <div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">add_spec</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">Float32</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="s2">"32"</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Float32</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="s2">"32"</span><span class="p">]:</span>
@@ -7670,7 +7670,7 @@ Correct!
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h1 id="Puzzle-2:-Constant-Add-Block">Puzzle 2: Constant Add Block<a class="anchor-link" href="#Puzzle-2:-Constant-Add-Block">¶</a></h1><p>Add a constant to a vector. Uses one program block axis (no <code>for</code> loops yet). Block size <code>B0</code> is now smaller than the shape vector <code>x</code> which is <code>N0</code>.</p>
+<h1 id="Puzzle-2:-Constant-Add-Block-">Puzzle 2: Constant Add Block <a class="anchor-link" href="#Puzzle-2:-Constant-Add-Block-">¶</a></h1><p>Add a constant to a vector. Uses one program block axis (no <code>for</code> loops yet). Block size <code>B0</code> is now smaller than the shape vector <code>x</code> which is <code>N0</code>.</p>
 <p>$$z_i = 10 + x_i \text{ for } i = 1\ldots N_0$$</p>
 <p><img alt="" src="imgs/puzzle_2.png"/></p>
 <div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">add2_spec</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">Float32</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="s2">"200"</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Float32</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="s2">"200"</span><span class="p">]:</span>
@@ -7734,7 +7734,7 @@ Correct!
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h1 id="Puzzle-3:-Outer-Vector-Add">Puzzle 3: Outer Vector Add<a class="anchor-link" href="#Puzzle-3:-Outer-Vector-Add">¶</a></h1><p>Add two vectors.</p>
+<h1 id="Puzzle-3:-Outer-Vector-Add-">Puzzle 3: Outer Vector Add <a class="anchor-link" href="#Puzzle-3:-Outer-Vector-Add-">¶</a></h1><p>Add two vectors.</p>
 <p>Uses one program block axis. Block size <code>B0</code> is always the same as vector <code>x</code> length <code>N0</code>.
 Block size <code>B1</code> is always the same as vector <code>y</code> length <code>N1</code>.</p>
 <p>$$z_{j, i} = x_i + y_j\text{ for } i = 1\ldots B_0,\ j = 1\ldots B_1$$</p>
@@ -7816,7 +7816,7 @@ Correct!
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h1 id="Puzzle-4:-Outer-Vector-Add-Block">Puzzle 4: Outer Vector Add Block<a class="anchor-link" href="#Puzzle-4:-Outer-Vector-Add-Block">¶</a></h1><p>Add a row vector to a column vector.</p>
+<h1 id="Puzzle-4:-Outer-Vector-Add-Block-">Puzzle 4: Outer Vector Add Block <a class="anchor-link" href="#Puzzle-4:-Outer-Vector-Add-Block-">¶</a></h1><p>Add a row vector to a column vector.</p>
 <p>Uses two program block axes. Block size <code>B0</code> is always less than the vector <code>x</code> length <code>N0</code>.
 Block size <code>B1</code> is always less than vector <code>y</code> length <code>N1</code>.</p>
 <p>$$z_{j, i} = x_i + y_j\text{ for } i = 1\ldots N_0,\ j = 1\ldots N_1$$</p>
@@ -8319,7 +8319,7 @@ Correct!
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h1 id="Puzzle-5:-Fused-Outer-Multiplication">Puzzle 5: Fused Outer Multiplication<a class="anchor-link" href="#Puzzle-5:-Fused-Outer-Multiplication">¶</a></h1><p>Multiply a row vector to a column vector and take a relu.</p>
+<h1 id="Puzzle-5:-Fused-Outer-Multiplication-">Puzzle 5: Fused Outer Multiplication <a class="anchor-link" href="#Puzzle-5:-Fused-Outer-Multiplication-">¶</a></h1><p>Multiply a row vector to a column vector and take a relu.</p>
 <p>Uses two program block axes. Block size <code>B0</code> is always less than the vector <code>x</code> length <code>N0</code>.
 Block size <code>B1</code> is always less than vector <code>y</code> length <code>N1</code>.</p>
 <p>$$z_{j, i} = \text{relu}(x_i \times y_j)\text{ for } i = 1\ldots N_0,\ j = 1\ldots N_1$$</p>
@@ -8390,7 +8390,7 @@ Correct!
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h1 id="Puzzle-6:-Fused-Outer-Multiplication---Backwards">Puzzle 6: Fused Outer Multiplication - Backwards<a class="anchor-link" href="#Puzzle-6:-Fused-Outer-Multiplication---Backwards">¶</a></h1><p>Backwards of a function that multiplies a matrix with a row vector and take a relu.</p>
+<h1 id="Puzzle-6:-Fused-Outer-Multiplication---Backwards-">Puzzle 6: Fused Outer Multiplication - Backwards <a class="anchor-link" href="#Puzzle-6:-Fused-Outer-Multiplication---Backwards-">¶</a></h1><p>Backwards of a function that multiplies a matrix with a row vector and take a relu.</p>
 <p>Uses two program blocks. Block size <code>B0</code> is always less than the vector <code>x</code> length <code>N0</code>.
 Block size <code>B1</code> is always less than vector <code>y</code> length <code>N1</code>. Chain rule backward <code>dz</code>
 is of shape <code>N1</code> by <code>N0</code></p>
@@ -8534,7 +8534,7 @@ Correct!
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h1 id="Puzzle-7:-Long-Sum">Puzzle 7: Long Sum<a class="anchor-link" href="#Puzzle-7:-Long-Sum">¶</a></h1><p>Sum of a batch of numbers.</p>
+<h1 id="Puzzle-7:-Long-Sum-">Puzzle 7: Long Sum <a class="anchor-link" href="#Puzzle-7:-Long-Sum-">¶</a></h1><p>Sum of a batch of numbers.</p>
 <p>Uses one program blocks. Block size <code>B0</code> represents a range of batches of  <code>x</code> of length <code>N0</code>.
 Each element is of length <code>T</code>. Process it <code>B1 &lt; T</code> elements at a time.</p>
 <p>$$z_{i} = \sum^{T}_j x_{i,j} =  \text{ for } i = 1\ldots N_0$$</p>
@@ -8628,7 +8628,7 @@ Correct!
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h1 id="Puzzle-8:-Long-Softmax">Puzzle 8: Long Softmax<a class="anchor-link" href="#Puzzle-8:-Long-Softmax">¶</a></h1><p>Softmax of a batch of logits.</p>
+<h1 id="Puzzle-8:-Long-Softmax-">Puzzle 8: Long Softmax <a class="anchor-link" href="#Puzzle-8:-Long-Softmax-">¶</a></h1><p>Softmax of a batch of logits.</p>
 <p>Uses one program block axis. Block size <code>B0</code> represents the batch of <code>x</code> of length <code>N0</code>.
 Block logit length <code>T</code>.   Process it <code>B1 &lt; T</code> elements at a time.</p>
 <p>$$z_{i, j} = \text{softmax}(x_{i,1} \ldots x_{i, T}) \text{ for } i = 1\ldots N_0$$</p>
@@ -8729,7 +8729,7 @@ Correct!
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h1 id="Puzzle-9:-Simple-FlashAttention">Puzzle 9: Simple FlashAttention<a class="anchor-link" href="#Puzzle-9:-Simple-FlashAttention">¶</a></h1><p>A scalar version of FlashAttention.</p>
+<h1 id="Puzzle-9:-Simple-FlashAttention-">Puzzle 9: Simple FlashAttention <a class="anchor-link" href="#Puzzle-9:-Simple-FlashAttention-">¶</a></h1><p>A scalar version of FlashAttention.</p>
 <ul>
 <li>Each query, key vector only has 1 dim (hence scalar flash attention)</li>
 <li>Uses zero programs. Block size <code>B0</code> represent the batches of <code>q</code> to process out of <code>N0</code>.</li>
@@ -8834,13 +8834,24 @@ Correct!
 </div>
 </div>
 </div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=f475dd05">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<h1 id="Didn't-get-the-chance-to-complete-the-last-3-puzzles-but-will-complete-them-soon">Didn't get the chance to complete the last 3 puzzles but will complete them soon<a class="anchor-link" href="#Didn't-get-the-chance-to-complete-the-last-3-puzzles-but-will-complete-them-soon">¶</a></h1>
+</div>
+</div>
+</div>
+</div>
 <div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=ae12e14b-0da4-414c-9574-ab747b2be387">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h1 id="Puzzle-10:-Two-Dimensional-Convolution">Puzzle 10: Two Dimensional Convolution<a class="anchor-link" href="#Puzzle-10:-Two-Dimensional-Convolution">¶</a></h1><p>A batched 2D convolution.</p>
+<h1 id="Puzzle-10:-Two-Dimensional-Convolution-">Puzzle 10: Two Dimensional Convolution <a class="anchor-link" href="#Puzzle-10:-Two-Dimensional-Convolution-">¶</a></h1><p>A batched 2D convolution.</p>
 <p>Uses one program id axis. Block size <code>B0</code> represent the batches to process out of <code>N0</code>.
 Image <code>x</code> is size is <code>H</code> by <code>W</code> with only 1 channel, and kernel <code>k</code> is size <code>KH</code> by <code>KW</code>.</p>
 <p>$$z_{i, j, k} = \sum_{oj, ok} k_{oj,ok} \times x_{i,j + oj, k + ok} \text{ for } i = 1\ldots N_0$$</p>
@@ -8901,7 +8912,7 @@ Image <code>x</code> is size is <code>H</code> by <code>W</code> with only 1 cha
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h1 id="Puzzle-11:-Matrix-Multiplication">Puzzle 11: Matrix Multiplication<a class="anchor-link" href="#Puzzle-11:-Matrix-Multiplication">¶</a></h1><p>A blocked matrix multiplication.</p>
+<h1 id="Puzzle-11:-Matrix-Multiplication-">Puzzle 11: Matrix Multiplication <a class="anchor-link" href="#Puzzle-11:-Matrix-Multiplication-">¶</a></h1><p>A blocked matrix multiplication.</p>
 <p>Uses three program id axes. Block size <code>B2</code> represent the batches to process out of <code>N2</code>.
 Block size <code>B0</code> represent the rows of <code>x</code> to process out of <code>N0</code>. Block size <code>B1</code> represent the cols of <code>y</code> to process out of <code>N1</code>. The middle shape is <code>MID</code>.</p>
 <p>$$z_{i, j, k} = \sum_{l} x_{i,j, l} \times y_{i, l, k} \text{ for } i = 1\ldots N_2, j = 1\ldots N_0, k = 1\ldots N_1$$</p>
@@ -8952,7 +8963,7 @@ Block size <code>B0</code> represent the rows of <code>x</code> to process out o
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h1 id="Puzzle-12:-Quantized-Matrix-Mult">Puzzle 12: Quantized Matrix Mult<a class="anchor-link" href="#Puzzle-12:-Quantized-Matrix-Mult">¶</a></h1><p>When doing matrix multiplication with quantized neural networks a common strategy is to store the weight matrix in lower precision, with a shift and scale term.</p>
+<h1 id="Puzzle-12:-Quantized-Matrix-Mult-">Puzzle 12: Quantized Matrix Mult <a class="anchor-link" href="#Puzzle-12:-Quantized-Matrix-Mult-">¶</a></h1><p>When doing matrix multiplication with quantized neural networks a common strategy is to store the weight matrix in lower precision, with a shift and scale term.</p>
 <p>For this problem our <code>weight</code> will be stored in 4 bits. We can store <code>FPINT</code> of these in a 32 bit integer. In addition for every <code>group</code> weights in order we will store 1 <code>scale</code> float value and 1 <code>shift</code> 4 bit value. We store these for the column of weight. The <code>activation</code>s are stored separately in standard floats.</p>
 <p>Mathematically it looks like.</p>
 <p>$$z_{j, k} = \sum_{l} sc_{j, \frac{l}{g}} (w_{j, l} - sh_{j, \frac{l}{g}}) \times y_{l, k} \text{ for } i = 1\ldots N_2, j = 1\ldots N_0, k = 1\ldots N_1$$</p>
