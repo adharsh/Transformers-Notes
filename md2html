@@ -1,0 +1,127 @@
+#!/usr/bin/env node
+
+const fs = require('fs');
+const path = require('path');
+const MarkdownIt = require('markdown-it');
+const mk = require('@iktakahiro/markdown-it-katex');
+const hljs = require('highlight.js');
+
+const md = new MarkdownIt({
+    html: true,
+    highlight: function (str, lang) {
+        if (lang && hljs.getLanguage(lang)) {
+            try {
+                return hljs.highlight(str, { language: lang }).value;
+            } catch (__) {}
+        }
+        return ''; // use external default escaping
+    }
+});
+md.use(mk);
+
+function convertMarkdownToHtml(markdown) {
+    const result = md.render(markdown);
+
+    // Wrap the result in a basic HTML structure with dark theme styling
+    const fullHtml = `
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Converted Markdown</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.7/dist/katex.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/vs2015.min.css">
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+            line-height: 1.6;
+            color: #e0e0e0;
+            background-color: #1e1e1e;
+            padding: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        pre {
+            background-color: #1e1e1e;
+            border-radius: 4px;
+            padding: 16px;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        code {
+            font-family: Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace;
+            font-size: 14px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin-bottom: 1em;
+        }
+        th, td {
+            border: 1px solid #4a4a4a;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #2d2d2d;
+        }
+        img {
+            max-width: 100%;
+            height: auto;
+        }
+        a {
+            color: #569cd6;
+        }
+        h1, h2, h3, h4, h5, h6 {
+            color: #e0e0e0;
+        }
+    </style>
+</head>
+<body>
+    ${result}
+</body>
+</html>
+    `;
+
+    return fullHtml;
+}
+
+if (process.argv.length < 3) {
+    console.error('Usage: convert <file1.md> <file2.md> ...');
+    process.exit(1);
+}
+
+const files = process.argv.slice(2);
+
+files.forEach((file) => {
+    const inputPath = path.resolve(file);
+
+    if (!fs.existsSync(inputPath)) {
+        console.error(`File not found: ${inputPath}`);
+        return;
+    }
+
+    const ext = path.extname(inputPath);
+    if (ext !== '.md') {
+        console.error(`Invalid file type: ${inputPath} (must be .md)`);
+        return;
+    }
+
+    const outputPath = path.join(
+        path.dirname(inputPath),
+        `${path.basename(inputPath, ext)}.html`
+    );
+
+    try {
+        const markdown = fs.readFileSync(inputPath, 'utf8');
+        const html = convertMarkdownToHtml(markdown);
+        fs.writeFileSync(outputPath, html, 'utf8');
+        console.log(`Converted: ${inputPath} -> ${outputPath}`);
+    } catch (error) {
+        console.error(`Error processing file: ${inputPath}`);
+        console.error(error.message);
+    }
+});

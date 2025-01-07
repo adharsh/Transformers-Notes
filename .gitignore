@@ -3,9 +3,6 @@
 
 anki/
 
-/md2html
-/html2pdf
-
 *.md
 !README.md
 

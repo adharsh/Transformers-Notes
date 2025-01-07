@@ -1,0 +1,39 @@
+#!/bin/bash
+
+# Check if the user provided a file path
+if [ -z "$1" ]; then
+  echo "Usage: $0 <path-to-html-file>"
+  exit 1
+fi
+
+# Get the input file path
+input_file="$1"
+
+# Ensure the file exists
+if [ ! -f "$input_file" ]; then
+  echo "Error: File '$input_file' not found."
+  exit 1
+fi
+
+# Get the directory and filename (without extension)
+output_dir=$(dirname "$input_file")
+filename=$(basename "$input_file" .html)
+
+# Set the output PDF path
+output_file="$output_dir/$filename.pdf"
+
+# Step 1: Get line count
+line_count=$(wc -l < "$input_file")
+
+# Step 2: Estimate height in mm (adjust 20px per line as needed)
+height_mm=$(echo "($line_count * 20 / 96) * 25.4" | bc -l)
+
+# Step 3: Run wkhtmltopdf with estimated height
+wkhtmltopdf --page-width 210mm --page-height ${height_mm}mm --margin-top 0 --margin-bottom 0 --margin-left 0 --margin-right 0 "$input_file" "$output_file"
+
+# Notify the user of the output file location
+if [ $? -eq 0 ]; then
+  echo "PDF generated successfully: $output_file"
+else
+  echo "Error: Failed to generate PDF."
+fi
