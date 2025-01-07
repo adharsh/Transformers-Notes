@@ -1,0 +1,10 @@
+.gradio/
+.ipynb_checkpoints/
+
+anki/
+
+/md2html
+/html2pdf
+
+*.md
+# *.html

@@ -1,0 +1,4 @@
+#!/bin/bash
+
+find . -type f -name "*.md" -exec ./md2html '{}' \;
+find . -type f -name "*.html" -exec ./html2pdf '{}' \;

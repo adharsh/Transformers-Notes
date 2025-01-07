@@ -1,0 +1,423 @@
+
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Converted Markdown</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.7/dist/katex.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/vs2015.min.css">
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+            line-height: 1.6;
+            color: #e0e0e0;
+            background-color: #1e1e1e;
+            padding: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        pre {
+            background-color: #1e1e1e;
+            border-radius: 4px;
+            padding: 16px;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        code {
+            font-family: Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace;
+            font-size: 14px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin-bottom: 1em;
+        }
+        th, td {
+            border: 1px solid #4a4a4a;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #2d2d2d;
+        }
+        img {
+            max-width: 100%;
+            height: auto;
+        }
+        a {
+            color: #569cd6;
+        }
+        h1, h2, h3, h4, h5, h6 {
+            color: #e0e0e0;
+        }
+    </style>
+</head>
+<body>
+    <h1>How to define shared memory and perform loads/stores?</h1>
+<pre><code class="language-python"><span class="hljs-keyword">import</span> triton
+<span class="hljs-keyword">import</span> triton.language <span class="hljs-keyword">as</span> tl
+
+shared_memory = tl.shared(tl.float32, size)
+
+<span class="hljs-comment"># Load data from shared memory</span>
+value = tl.load(shared_memory + offset)
+
+<span class="hljs-comment"># Store data into shared memory</span>
+tl.store(shared_memory + offset, value)
+
+<span class="hljs-comment"># Synchronize threads</span>
+tl.sync()
+</code></pre>
+<h1>Analog of <code>blockDim.x</code> in CUDA for Triton?</h1>
+<pre><code class="language-python"><span class="hljs-keyword">import</span> triton
+<span class="hljs-keyword">import</span> triton.language <span class="hljs-keyword">as</span> tl
+
+<span class="hljs-meta">@triton.jit</span>
+<span class="hljs-keyword">def</span> <span class="hljs-title function_">add_kernel</span>(<span class="hljs-params">...</span>):
+    pid = tl.program_id(axis=<span class="hljs-number">0</span>)
+    ...
+</code></pre>
+<h1>How to generate offsets to index into data in Triton?</h1>
+<pre><code class="language-python"><span class="hljs-keyword">import</span> triton
+<span class="hljs-keyword">import</span> triton.language <span class="hljs-keyword">as</span> tl
+
+<span class="hljs-meta">@triton.jit</span>
+<span class="hljs-keyword">def</span> <span class="hljs-title function_">add_kernel</span>(<span class="hljs-params">...</span>):
+    ...
+    block_start = tl.block_id(axis=<span class="hljs-number">0</span>) * tl.block_dim(axis=<span class="hljs-number">0</span>)
+
+</code></pre>
+<h1>Execution Configuration of CUDA vs Triton</h1>
+<p>CUDA: <code>&lt;&lt;&lt;grid, block, sharedMemorySize, stream&gt;&gt;&gt;</code></p>
+<ul>
+<li>In CUDA: <code>grid</code> specifies the number of thread blocks in each dimension.</li>
+</ul>
+<p>Triton (gridsize): <code>[(BLOCK_X, BLOCK_Y, BLOCK_Z)]</code></p>
+<ul>
+<li>In Triton: The <code>[]</code> specifies the <strong>number of program instances (blocks)</strong> launched in each dimension.</li>
+<li>Unlike CUDA, Triton abstracts away the <strong>threads per block</strong> configuration (similar to the CUDA <code>block</code> parameter). Each block in Triton typically handles a vector of data, determined by how the kernel is implemented.</li>
+</ul>
+<h3><strong>Full Comparison: CUDA vs. Triton</strong></h3>
+<table>
+<thead>
+<tr>
+<th>Feature</th>
+<th>CUDA Syntax</th>
+<th>Triton Syntax</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Grid size</td>
+<td><code>&lt;&lt;&lt;grid, block, ...&gt;&gt;&gt;</code></td>
+<td><code>[(BLOCK_X, BLOCK_Y, BLOCK_Z)]</code></td>
+</tr>
+<tr>
+<td>Block size (threads)</td>
+<td><code>&lt;&lt;&lt;..., block, ...&gt;&gt;&gt;</code></td>
+<td>Automatically handled per block</td>
+</tr>
+<tr>
+<td>Shared memory size</td>
+<td><code>&lt;&lt;&lt;..., sharedMemorySize, ...&gt;&gt;&gt;</code></td>
+<td>Inferred automatically</td>
+</tr>
+<tr>
+<td>Streams</td>
+<td><code>&lt;&lt;&lt;..., stream&gt;&gt;&gt;</code></td>
+<td>Not directly exposed</td>
+</tr>
+<tr>
+<td>Example launch</td>
+<td><code>myKernel&lt;&lt;&lt;dim3(16,8,1), dim3(32,32,1)&gt;&gt;&gt;()</code></td>
+<td><code>kernel[(16, 8, 1)]()</code></td>
+</tr>
+</tbody>
+</table>
+<pre><code class="language-python"><span class="hljs-meta">@triton.jit</span>
+<span class="hljs-keyword">def</span> <span class="hljs-title function_">kernel</span>(<span class="hljs-params">x_ptr</span>):
+    <span class="hljs-comment"># Your kernel logic</span>
+    <span class="hljs-keyword">pass</span>
+
+<span class="hljs-comment"># Launch kernel with a grid size of (16, 8, 1)</span>
+kernel[(<span class="hljs-number">16</span>, <span class="hljs-number">8</span>, <span class="hljs-number">1</span>)](x_ptr=torch.ones(<span class="hljs-number">256</span>, device=<span class="hljs-string">&#x27;cuda&#x27;</span>))
+</code></pre>
+<p>Number of threads per block is abstracted away in Triton. Triton automatically determines the number of threads per block based on the kernel implementation. But here's the formula anyways:</p>
+<p class='katex-block'><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mtext>Total threads</mtext><mo>=</mo><mtext>Grid size</mtext><mo>×</mo><mtext>Threads per block</mtext></mrow><annotation encoding="application/x-tex">\text{Total threads} = \text{Grid size} \times \text{Threads per block}
+</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.69444em;vertical-align:0em;"></span><span class="mord text"><span class="mord">Total threads</span></span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:0.77777em;vertical-align:-0.08333em;"></span><span class="mord text"><span class="mord">Grid size</span></span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span></span><span class="base"><span class="strut" style="height:0.8888799999999999em;vertical-align:-0.19444em;"></span><span class="mord text"><span class="mord">Threads per block</span></span></span></span></span></span></p>
+<p>Triton's vernacular for threads is &quot;program instances&quot;.</p>
+<h1>What does this triton kernel do?</h1>
+<pre><code class="language-python"><span class="hljs-meta">@triton.jit</span>
+<span class="hljs-keyword">def</span> <span class="hljs-title function_">demo</span>(<span class="hljs-params">x_ptr</span>):
+    <span class="hljs-built_in">range</span> = tl.arange(<span class="hljs-number">0</span>, <span class="hljs-number">8</span>)
+    <span class="hljs-built_in">print</span>(<span class="hljs-built_in">range</span>)
+
+    x = tl.load(x_ptr + <span class="hljs-built_in">range</span>, <span class="hljs-built_in">range</span> &lt; <span class="hljs-number">5</span>, <span class="hljs-number">0</span>)
+    <span class="hljs-built_in">print</span>(x)
+
+triton_viz.trace(demo)[(<span class="hljs-number">1</span>, <span class="hljs-number">1</span>, <span class="hljs-number">1</span>)](torch.ones(<span class="hljs-number">4</span>, <span class="hljs-number">3</span>))
+triton_viz.launch()
+</code></pre>
+<hr>
+<pre><code class="language-python"><span class="hljs-comment"># Decorator to make GPU-compatiable code</span>
+<span class="hljs-meta">@triton.jit</span>
+<span class="hljs-keyword">def</span> <span class="hljs-title function_">demo</span>(<span class="hljs-params">x_ptr</span>): <span class="hljs-comment"># x_ptr: Pointer to data in global memory</span>
+    <span class="hljs-comment"># Generates a tensor on the GPU</span>
+    <span class="hljs-built_in">range</span> = tl.arange(<span class="hljs-number">0</span>, <span class="hljs-number">8</span>)
+    <span class="hljs-built_in">print</span>(<span class="hljs-built_in">range</span>)
+
+    <span class="hljs-comment"># range &lt; 5 is mask, 0 is when mask is False</span>
+    <span class="hljs-comment"># [x_ptr[0], x_ptr[1], x_ptr[2], x_ptr[3], x_ptr[4], 0, 0, 0]</span>
+    <span class="hljs-comment"># tl.load reads from global memory into registers (or might spill into global memory)</span>
+    x = tl.load(x_ptr + <span class="hljs-built_in">range</span>, <span class="hljs-built_in">range</span> &lt; <span class="hljs-number">5</span>, <span class="hljs-number">0</span>)
+    <span class="hljs-built_in">print</span>(x)
+
+<span class="hljs-comment"># Grid size: 1 block</span>
+triton_viz.trace(demo)[(<span class="hljs-number">1</span>, <span class="hljs-number">1</span>, <span class="hljs-number">1</span>)](torch.ones(<span class="hljs-number">4</span>, <span class="hljs-number">3</span>))
+triton_viz.launch()
+</code></pre>
+<h1>How to add a new axis to a tensor in Triton?</h1>
+<pre><code class="language-python"><span class="hljs-comment"># Shape: (1, 4)</span>
+<span class="hljs-comment"># array([[0, 1, 2, 3, 4, 5, 6, 7]])</span>
+tl.arange(<span class="hljs-number">0</span>, <span class="hljs-number">4</span>)[<span class="hljs-literal">None</span>, :]
+tl.arange(<span class="hljs-number">0</span>, <span class="hljs-number">4</span>)[np.newaxis, :]
+
+<span class="hljs-comment"># Shape: (8, 1)</span>
+<span class="hljs-comment"># array([[0],</span>
+<span class="hljs-comment">#       [1],</span>
+<span class="hljs-comment">#       [2],</span>
+<span class="hljs-comment">#       [3],</span>
+<span class="hljs-comment">#       [4],</span>
+<span class="hljs-comment">#       [5],</span>
+<span class="hljs-comment">#       [6],</span>
+<span class="hljs-comment">#       [7]])</span>
+tl.arange(<span class="hljs-number">0</span>, <span class="hljs-number">8</span>)[:, <span class="hljs-literal">None</span>]
+tl.arange(<span class="hljs-number">0</span>, <span class="hljs-number">8</span>)[:, np.newaxis]
+</code></pre>
+<h1>How does this work in Triton?</h1>
+<pre><code class="language-python"><span class="hljs-keyword">import</span> numpy <span class="hljs-keyword">as</span> tl
+
+i_range = tl.arange(<span class="hljs-number">0</span>, <span class="hljs-number">8</span>)[:, <span class="hljs-literal">None</span>] <span class="hljs-comment"># (8, 1)</span>
+j_range = tl.arange(<span class="hljs-number">0</span>, <span class="hljs-number">4</span>)[<span class="hljs-literal">None</span>, :] <span class="hljs-comment"># (1, 4)</span>
+<span class="hljs-built_in">range</span> = i_range*<span class="hljs-number">4</span> + j_range
+<span class="hljs-built_in">range</span>
+</code></pre>
+<pre><code>array([[ 0,  1,  2,  3],
+       [ 4,  5,  6,  7],
+       [ 8,  9, 10, 11],
+       [12, 13, 14, 15],
+       [16, 17, 18, 19],
+       [20, 21, 22, 23],
+       [24, 25, 26, 27],
+       [28, 29, 30, 31]])
+</code></pre>
+<hr>
+<ul>
+<li>i_range: (8,1)</li>
+<li>j_range: (1,4)</li>
+<li>Broadcasted together:
+<ul>
+<li>i_range: (8,1) -&gt; (8,4)</li>
+<li>j_range: (1,4) -&gt; (8,4)</li>
+</ul>
+</li>
+</ul>
+<pre><code># i_range * 4
+array([[ 0],
+       [ 4],
+       [ 8],
+       [12],
+       [16],
+       [20],
+       [24],
+       [28]])
+
+# j_range
+array([[0, 1, 2, 3]])
+
+# After broadcasting:
+# i_range * 4
+array([[ 0,  0,  0,  0],
+       [ 4,  4,  4,  4],
+       [ 8,  8,  8,  8],
+       [12, 12, 12, 12],
+       [16, 16, 16, 16],
+       [20, 20, 20, 20],
+       [24, 24, 24, 24],
+       [28, 28, 28, 28]])
+
+# After broadcasting:
+# j_range
+array([[0, 1, 2, 3],
+       [0, 1, 2, 3],
+       [0, 1, 2, 3],
+       [0, 1, 2, 3],
+       [0, 1, 2, 3],
+       [0, 1, 2, 3],
+       [0, 1, 2, 3],
+       [0, 1, 2, 3],
+])
+
+Results in: 
+array([[ 0,  1,  2,  3],
+       [ 4,  5,  6,  7],
+       [ 8,  9, 10, 11],
+       [12, 13, 14, 15],
+       [16, 17, 18, 19],
+       [20, 21, 22, 23],
+       [24, 25, 26, 27],
+       [28, 29, 30, 31]])
+</code></pre>
+<h1>What are the values and shape of x?</h1>
+<pre><code class="language-python"><span class="hljs-meta">@triton.jit</span>
+<span class="hljs-keyword">def</span> <span class="hljs-title function_">demo</span>(<span class="hljs-params">x_ptr</span>):
+    i_range = tl.arange(<span class="hljs-number">0</span>, <span class="hljs-number">8</span>)[:, <span class="hljs-literal">None</span>]
+    j_range = tl.arange(<span class="hljs-number">0</span>, <span class="hljs-number">4</span>)[<span class="hljs-literal">None</span>, :]
+    <span class="hljs-built_in">range</span> = i_range*<span class="hljs-number">4</span> + j_range <span class="hljs-comment"># Shape: (8, 4)</span>
+    <span class="hljs-comment"># print works in the interpreter</span>
+    <span class="hljs-built_in">print</span>(<span class="hljs-built_in">range</span>)
+    x = tl.load(x_ptr + <span class="hljs-built_in">range</span>, (i_range &lt; <span class="hljs-number">4</span>) &amp; (j_range &lt; <span class="hljs-number">3</span>), <span class="hljs-number">0</span>)
+    <span class="hljs-built_in">print</span>(x)
+
+triton_viz.trace(demo)[(<span class="hljs-number">1</span>, <span class="hljs-number">1</span>, <span class="hljs-number">1</span>)](torch.ones(<span class="hljs-number">4</span>, <span class="hljs-number">4</span>))
+triton_viz.launch()
+</code></pre>
+<hr>
+<pre><code>x_ptr is pointing to the flattened memory of:
+[[1, 1, 1, 1],
+ [1, 1, 1, 1],
+ [1, 1, 1, 1],
+ [1, 1, 1, 1]]
+</code></pre>
+<pre><code>Mask:
+[[ True,  True,  True, False],
+ [ True,  True,  True, False],
+ [ True,  True,  True, False],
+ [ True,  True,  True, False],
+ [False, False, False, False],
+ [False, False, False, False],
+ [False, False, False, False],
+ [False, False, False, False]]
+</code></pre>
+<pre><code>x:
+[[1, 1, 1, 0],
+ [1, 1, 1, 0],
+ [1, 1, 1, 0],
+ [1, 1, 1, 0],
+ [0, 0, 0, 0],
+ [0, 0, 0, 0],
+ [0, 0, 0, 0],
+ [0, 0, 0, 0]]
+</code></pre>
+<h1>What does this Triton kernel do?</h1>
+<pre><code class="language-python"><span class="hljs-meta">@triton.jit</span>
+<span class="hljs-keyword">def</span> <span class="hljs-title function_">demo</span>(<span class="hljs-params">z_ptr</span>):
+    <span class="hljs-built_in">range</span> = tl.arange(<span class="hljs-number">0</span>, <span class="hljs-number">8</span>)
+    z = tl.store(z_ptr + <span class="hljs-built_in">range</span>, <span class="hljs-number">10</span>, <span class="hljs-built_in">range</span> &lt; <span class="hljs-number">5</span>)
+
+z = torch.ones(<span class="hljs-number">4</span>, <span class="hljs-number">3</span>)
+triton_viz.trace(demo)[(<span class="hljs-number">1</span>, <span class="hljs-number">1</span>, <span class="hljs-number">1</span>)](z)
+<span class="hljs-built_in">print</span>(z)
+triton_viz.launch()
+</code></pre>
+<hr>
+<ul>
+<li>We're passing in an address to the beginning of a buffer of memory consisting of 12 integers</li>
+<li>Our arange consists of 8 indices</li>
+<li>And our mask only writes the first 5 indices</li>
+</ul>
+<pre><code class="language-python"><span class="hljs-meta">@triton.jit</span>
+<span class="hljs-keyword">def</span> <span class="hljs-title function_">demo</span>(<span class="hljs-params">z_ptr</span>):
+    <span class="hljs-built_in">range</span> = tl.arange(<span class="hljs-number">0</span>, <span class="hljs-number">8</span>)
+
+    <span class="hljs-comment"># Parameters: (address(es), value, mask)</span>
+    <span class="hljs-comment"># z_ptr + range: [z_ptr[0], z_ptr[1], z_ptr[2], z_ptr[3], z_ptr[4], z_ptr[5], z_ptr[6], z_ptr[7]]</span>
+    z = tl.store(z_ptr + <span class="hljs-built_in">range</span>, <span class="hljs-number">10</span>, <span class="hljs-built_in">range</span> &lt; <span class="hljs-number">5</span>)
+
+z = torch.ones(<span class="hljs-number">4</span>, <span class="hljs-number">3</span>)
+triton_viz.trace(demo)[(<span class="hljs-number">1</span>, <span class="hljs-number">1</span>, <span class="hljs-number">1</span>)](z)
+<span class="hljs-built_in">print</span>(z)
+triton_viz.launch()
+</code></pre>
+<h1>What does this kernel do?</h1>
+<pre><code class="language-python"><span class="hljs-meta">@triton.jit</span>
+<span class="hljs-keyword">def</span> <span class="hljs-title function_">demo</span>(<span class="hljs-params">x_ptr</span>):
+    pid = tl.program_id(<span class="hljs-number">0</span>)
+    <span class="hljs-built_in">range</span> = tl.arange(<span class="hljs-number">0</span>, <span class="hljs-number">8</span>) + pid*<span class="hljs-number">8</span>
+    x = tl.load(x_ptr + <span class="hljs-built_in">range</span>, <span class="hljs-built_in">range</span> &lt; <span class="hljs-number">20</span>)
+    <span class="hljs-built_in">print</span>(<span class="hljs-string">&quot;Print for each&quot;</span>, pid, x)
+
+x = torch.ones(<span class="hljs-number">2</span>, <span class="hljs-number">4</span>, <span class="hljs-number">4</span>)
+triton_viz.trace(demo)[(<span class="hljs-number">3</span>, <span class="hljs-number">1</span>, <span class="hljs-number">1</span>)](x)
+triton_viz.launch()
+</code></pre>
+<hr>
+<ul>
+<li>Each program instance (block) is reponsible for 8 elements</li>
+<li>3 blocks total</li>
+<li>24 elements total</li>
+<li>8 elements per block</li>
+</ul>
+<pre><code class="language-python"><span class="hljs-meta">@triton.jit</span>
+<span class="hljs-keyword">def</span> <span class="hljs-title function_">demo</span>(<span class="hljs-params">x_ptr</span>):
+    <span class="hljs-comment"># pid in X direction</span>
+    pid = tl.program_id(<span class="hljs-number">0</span>)
+    <span class="hljs-built_in">range</span> = tl.arange(<span class="hljs-number">0</span>, <span class="hljs-number">8</span>) + pid*<span class="hljs-number">8</span>
+    <span class="hljs-comment"># 3rd argument other=None, but casted into dtype at value at address of x_ptr</span>
+    <span class="hljs-comment">#  so other = int(None) = 0</span>
+    x = tl.load(x_ptr + <span class="hljs-built_in">range</span>, <span class="hljs-built_in">range</span> &lt; <span class="hljs-number">20</span>) 
+    <span class="hljs-built_in">print</span>(<span class="hljs-string">&quot;Print for each&quot;</span>, pid, x)
+
+x = torch.ones(<span class="hljs-number">2</span>, <span class="hljs-number">4</span>, <span class="hljs-number">4</span>)
+triton_viz.trace(demo)[(<span class="hljs-number">3</span>, <span class="hljs-number">1</span>, <span class="hljs-number">1</span>)](x)
+triton_viz.launch()
+</code></pre>
+<h1><code>tl.max</code> vs <code>tl.maximum</code></h1>
+<ul>
+<li>If you're reducing a tensor to find a maximum, use <code>max</code></li>
+<li>For pairwise comparisons between tensors, use <code>maximum</code>.</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Feature</th>
+<th><code>max</code></th>
+<th><code>maximum</code></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Operation Type</td>
+<td>Reduction</td>
+<td>Element-wise</td>
+</tr>
+<tr>
+<td>Input/Output Dimensions</td>
+<td>Input: tensor, Output: reduced tensor</td>
+<td>Input/Output: same shape</td>
+</tr>
+<tr>
+<td>Use Case</td>
+<td>Finding maximum along an axis</td>
+<td>Comparing values element-wise</td>
+</tr>
+</tbody>
+</table>
+<pre><code class="language-python"><span class="hljs-keyword">import</span> triton.language <span class="hljs-keyword">as</span> tl
+
+x = tl.tensor([<span class="hljs-number">1</span>, <span class="hljs-number">3</span>, <span class="hljs-number">2</span>])
+result = tl.<span class="hljs-built_in">max</span>(x)  <span class="hljs-comment"># result = 3</span>
+</code></pre>
+<pre><code class="language-python"><span class="hljs-keyword">import</span> triton.language <span class="hljs-keyword">as</span> tl
+
+a = tl.tensor([<span class="hljs-number">1</span>, <span class="hljs-number">2</span>, <span class="hljs-number">3</span>])
+b = tl.tensor([<span class="hljs-number">3</span>, <span class="hljs-number">1</span>, <span class="hljs-number">2</span>])
+result = tl.maximum(a, b)  <span class="hljs-comment"># result = [3, 2, 3]</span>
+</code></pre>
+
+</body>
+</html>
+    
