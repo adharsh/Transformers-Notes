@@ -4,7 +4,7 @@ from pathlib import Path
 
 def generate_index_html():
     # Folders to exclude
-    EXCLUDE_FOLDERS = {'imgs', 'anki'}
+    EXCLUDE_FOLDERS = {'imgs', 'anki', 'decks'}
     
     # HTML header
     html = """<!DOCTYPE html>
